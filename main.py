@@ -31,11 +31,14 @@ def loadconfig():
     log('Loaded config.yaml')
 
     # can't do much without an api key!
-    if not config['api-key']:
+    if not config['api-key'] and not groupy.config.API_KEY:
         log('No API key set', 'e')
         exit()
-
-    groupy.config.API_KEY = config['api-key']
+    
+    # config api key overrides ~/.groupy.key
+    if config['api-key']:
+        with open(config['api-key']) as keyfile:
+            groupy.config.API_KEY = keyfile.readline().strip()
 
 def prompt():
     """Prompts for, parses and executes commands."""
@@ -191,8 +194,6 @@ def botsay(groupid, botname, message):
     """Sends a message to the identified group from a bot with name botname."""
     group = findgroup(groupid)
     if group is not None:
-        print(group.group_id)
-        ## LIBRARY BUG: BAD PARAMETERS FOR BOT CREATION, FAILS
         bot = groupy.Bot.create(botname, group)
         bot.post(message)
         bot.destroy()
@@ -202,13 +203,9 @@ def spam(userid, message=None, n=1):
     Repeatedly DM's the identified user with the given message.
     If the message is empty, a random unicode smiley will be sent.
     """
-    smiley = message is None
-    if not smiley:
-        message = emoji.emojize(message, use_aliases=True)
+    message = randomsmiley() if not message else emoji.emojize(message, use_aliases=True)
 
     for i in range(1, int(n)):
-        if smiley:
-            message = randomsmiley()
         print('sending dm: ' + message)
         dm(userid, message)
         time.sleep(2)
@@ -227,7 +224,6 @@ def readd(groupid):
             if (member.user_id != creatorid) and (member.user_id != myid):
                 group.remove( member )
         time.sleep(3)
-        ## LIBRARY BUG: NAME 'refersh' IS NOT DEFINED
         group.add( *members )
 
 def findgroup(groupid):

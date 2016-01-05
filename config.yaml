@@ -1,5 +1,9 @@
 ---
-api-key:
+# relative path to file containing your GroupMe API key
+api-key: groupme.key
+# string to be used as command prompt
 prompt: ~>
+# avatar to be used as the avatar of any created bots
 bot-avatar: https://i.imgur.com/0Dgz1HS.jpg
+# startup greeting
 greeting: gmcli by Quentin Young, version 1.0 -- type /help for help
