@@ -93,20 +93,20 @@ def prompt():
         user_id = match.group(1)
         message = match.group(2)
         dm(user_id, message)
-    # /spam <userid> <n> <message>
-    if re.match('/spam\s([0-9]+)\s([0-9]+)\s(.+)', command):
-        match = re.match('/spam\s([0-9]+)\s([0-9]+)\s(.+)', command)
+    # /dmspam <userid> <n> [message]
+    if re.match('/dmspam\s([0-9]+)\s([0-9]+).*', command):
+        match = re.match('/dmspam\s([0-9]+)\s([0-9]+)(.*)', command)
         user_id = match.group(1)
         n = match.group(2)
         message = match.group(3)
-        spam(user_id, message, n)
-    # /spam <userid> <n>
+        dmspam(user_id, message, n)
+    # /spam <groupid> <n> [message]
     if re.match('/spam\s([0-9]+)\s([0-9]+).*', command):
-        match = re.match('/spam\s([0-9]+)\s([0-9]+).*', command)
-        user_id = match.group(1)
+        match = re.match('/spam\s([0-9]+)\s([0-9]+)(.*)', command)
+        group_id = match.group(1)
         n = match.group(2)
-        message = None
-        spam(user_id, message, n)
+        message = match.group(3)
+        spam(group_id, message, n)
 
     prompt()
 
@@ -124,7 +124,9 @@ def showhelp():
     print('  /like <groupid> -- like the latest message in <groupid> times')
     print('  /botsay <botname> <groupid> <message> -- send a message from a bot')
     print('  /dm <userid> <message> -- send direct message to user')
-    print('  /spam <userid> <n> [message] -- send direct message to user, n times. '
+    print('  /dmspam <userid> <n> [message] -- send direct message to user, n times. '
+             'If no message is specified, a random unicode smiley will be sent.')
+    print('  /spam <groupid> <n> [message] -- send message to group, n times. '
              'If no message is specified, a random unicode smiley will be sent.')
     print('  /readd <groupid> -- remove and re-add all users of a group '
              '(except you and the creator)')
@@ -194,20 +196,32 @@ def botsay(groupid, botname, message):
     """Sends a message to the identified group from a bot with name botname."""
     group = findgroup(groupid)
     if group is not None:
-        bot = groupy.Bot.create(botname, group)
+        bot = groupy.Bot.create(botname, group, config['bot-avatar'])
         bot.post(message)
         bot.destroy()
 
-def spam(userid, message=None, n=1):
+def dmspam(userid, message=None, n=1):
     """
     Repeatedly DM's the identified user with the given message.
     If the message is empty, a random unicode smiley will be sent.
     """
-    message = randomsmiley() if not message else emoji.emojize(message, use_aliases=True)
+    if message:
+        message = emoji.emojize(message, use_aliases=True)
 
     for i in range(1, int(n)):
-        print('sending dm: ' + message)
-        dm(userid, message)
+        dm(userid, message if message else randomsmiley())
+        time.sleep(2)
+
+def spam(groupid, message=None, n=1):
+    """
+    Repeatedly messages the identified group with the given message.
+    If the message is empty, a random unicode smiley will be sent.
+    """
+    if message:
+        message = emoji.emojize(message, use_aliases=True)
+
+    for i in range(1, int(n)):
+        msg(groupid, message if message else randomsmiley())
         time.sleep(2)
 
 def readd(groupid):
